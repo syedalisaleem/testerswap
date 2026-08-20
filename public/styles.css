@@ -785,6 +785,23 @@ input.invalid:focus { border-color: var(--bad); }
   margin-top: 10px;
 }
 
+/* ============ TRUST BOX ============ */
+
+.trust-box {
+  background: color-mix(in srgb, var(--yours) 6%, var(--surface));
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.trust-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.84rem; color: var(--muted); line-height: 1.5;
+}
+.trust-icon {
+  font-size: 0.9rem; flex-shrink: 0; margin-top: 1px;
+}
+
 /* ============ ACCESSIBILITY ============ */
 
 @media (prefers-reduced-motion: reduce) {

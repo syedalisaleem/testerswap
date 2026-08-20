@@ -863,6 +863,13 @@ async function renderSettings() {
       <div class="card">
         <h3>AI draft helper</h3>
         <p class="small muted" style="margin-bottom:14px">Paste an OpenAI-compatible API key (OpenAI, Groq, OpenRouter, DeepSeek…) to draft reminder messages for testers and posts to recruit real ones.</p>
+
+        <div class="trust-box">
+          <div class="trust-row"><span class="trust-icon">🔒</span><span>Your key stays on this server only. We never send it to any third party.</span></div>
+          <div class="trust-row"><span class="trust-icon">🧹</span><span>Used only to call the AI API you configure. Nothing else.</span></div>
+          <div class="trust-row"><span class="trust-icon">💡</span><span>Tip: create a restricted key with spending limits at your provider.</span></div>
+        </div>
+
         <label for="aiKey">API key</label>
         <input id="aiKey" type="password" autocomplete="off" placeholder="sk-..." value="">
         <div class="row">
@@ -870,7 +877,11 @@ async function renderSettings() {
           <div><label for="aiBase">Base URL</label><input id="aiBase" placeholder="https://api.openai.com/v1" value="${esc(s.ai_base_url || 'https://api.openai.com/v1')}"></div>
         </div>
         <div id="err" class="inline-err" role="status"></div>
-        <button class="btn" id="save">Save changes</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="save">Save changes</button>
+          <button class="btn ghost" id="testKey" type="button">Test connection</button>
+        </div>
+        <p class="note-line" id="test-result"></p>
         <hr class="divider">
         <div class="draft-btns">
           <button class="btn ghost small" id="dRemind">Reminder</button>
@@ -894,6 +905,26 @@ async function renderSettings() {
     err.classList.add('inline-ok');
     err.textContent = 'Saved.';
     toast('Settings saved.');
+  }));
+
+  document.getElementById('testKey').addEventListener('click', safe(async () => {
+    const result = document.getElementById('test-result');
+    const key = document.getElementById('aiKey').value.trim();
+    const model = document.getElementById('aiModel').value.trim();
+    const base = document.getElementById('aiBase').value.trim();
+    if (!key) { result.innerHTML = '<span style="color:var(--bad)">Enter a key first.</span>'; return; }
+    result.innerHTML = '<span class="muted">Testing…</span>';
+    try {
+      await api('/settings', 'PUT', { aiApiKey: key, aiModel: model, aiBaseUrl: base });
+      const { text } = await api('/draft', 'POST', { kind: 'reminder' });
+      if (text && text.length > 20) {
+        result.innerHTML = '<span style="color:var(--yours)">✓ Connection works. Key is valid.</span>';
+      } else {
+        result.innerHTML = '<span style="color:var(--theirs)">⚠ Connected but got an unexpected response. Check your model name.</span>';
+      }
+    } catch (e) {
+      result.innerHTML = `<span style="color:var(--bad)">✕ ${esc(e.message)}</span>`;
+    }
   }));
 
   const runDraft = safe(async (kind) => {
@@ -950,6 +981,10 @@ async function renderSocial() {
       <div class="card">
         <h3>Discord Bot</h3>
         <p class="small muted" style="margin-bottom:14px">Configure a Discord bot to post in Android dev servers and search for testers.</p>
+        <div class="trust-box">
+          <div class="trust-row"><span class="trust-icon">🔒</span><span>Bot token stays on this server. Used only to send messages in channels you configure.</span></div>
+          <div class="trust-row"><span class="trust-icon">💡</span><span>Create a bot at <a href="https://discord.com/developers/applications" target="_blank" rel="noopener" style="color:var(--yours)">discord.com/developers</a> with minimal permissions.</span></div>
+        </div>
         <div id="discord-config">
           <label for="dBotToken">Bot Token</label>
           <input id="dBotToken" type="password" placeholder="Discord bot token" value="">
