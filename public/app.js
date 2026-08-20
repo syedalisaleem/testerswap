@@ -156,7 +156,7 @@ const themeMenu = document.getElementById('theme-menu');
 
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
-  const themeColor = { console: '#f2f4f0', terminal: '#0a1210', track: '#0e0b04' }[t] || '#0a1210';
+  const themeColor = { console: '#f3efe4', terminal: '#0d0f0e', track: '#120d05' }[t] || '#f3efe4';
   document.querySelector('meta[name="theme-color"]').setAttribute('content', themeColor);
   try { localStorage.setItem('ts-theme', t); } catch (e) {}
 }
