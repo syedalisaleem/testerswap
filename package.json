@@ -1,0 +1,20 @@
+{
+  "name": "testerswap",
+  "version": "1.0.0",
+  "description": "Community for Android devs to trade closed-test signups and track Google Play 12/14 requirements",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cookie-session": "^2.1.0",
+    "express": "^4.19.2",
+    "postgres": "^3.4.9"
+  }
+}
