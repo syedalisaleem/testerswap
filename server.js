@@ -401,15 +401,31 @@ app.post('/api/trades', requireAuth, ah(async (req, res) => {
 
 app.patch('/api/trades/:id', requireAuth, ah(async (req, res) => {
   const { status } = req.body || {};
-  const mine = await db.prepare('SELECT id FROM apps WHERE user_id = ?').get(req.session.userId);
+  const mine = await db.prepare('SELECT id, user_id FROM apps WHERE user_id = ?').get(req.session.userId);
   const trade = await db.prepare('SELECT * FROM trades WHERE id = ?').get(req.params.id);
   if (!trade) return res.status(404).json({ error: 'Trade not found' });
   if (trade.to_app_id === mine.id && status === 'confirmed') {
     await db.prepare('UPDATE trades SET status = ? WHERE id = ?').run('confirmed', trade.id);
+    // Record completion for reputation
+    const fromApp = await db.prepare('SELECT user_id FROM apps WHERE id = ?').get(trade.from_app_id);
+    await db.prepare('INSERT INTO swap_completions (id, trade_id, from_user_id, to_user_id, completed_at) VALUES (?, ?, ?, ?, ?)')
+      .run(randomUUID(), trade.id, fromApp?.user_id || '', mine.user_id, now());
+    // Notify the other user
+    const fromUser = await db.prepare('SELECT id FROM users WHERE id = ?').get(fromApp?.user_id);
+    if (fromUser) {
+      await db.prepare('INSERT INTO notifications (id, user_id, type, title, body, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(randomUUID(), fromUser.id, 'swap_complete', 'Swap completed!', 'Your swap partner confirmed the opt-in. Your reputation score increased.', now());
+    }
     return res.json({ ok: true });
   }
   if (trade.from_app_id === mine.id && status === 'joined') {
     await db.prepare('UPDATE trades SET status = ? WHERE id = ?').run('joined', trade.id);
+    // Notify the other user
+    const toApp = await db.prepare('SELECT user_id FROM apps WHERE id = ?').get(trade.to_app_id);
+    if (toApp) {
+      await db.prepare('INSERT INTO notifications (id, user_id, type, title, body, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(randomUUID(), toApp.user_id, 'swap_joined', 'Swap partner joined!', 'Someone joined your closed test. Confirm their opt-in when ready.', now());
+    }
     return res.json({ ok: true });
   }
   res.status(403).json({ error: 'Not allowed' });
@@ -561,6 +577,25 @@ app.patch('/api/notifications/:id/read', requireAuth, ah(async (req, res) => {
 app.post('/api/notifications/read-all', requireAuth, ah(async (req, res) => {
   await db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(req.session.userId);
   res.json({ ok: true });
+}));
+
+/* ---------- smart matching ---------- */
+
+app.get('/api/matches', requireAuth, ah(async (req, res) => {
+  const mine = await db.prepare('SELECT id, user_id FROM apps WHERE user_id = ?').get(req.session.userId);
+  if (!mine) return res.json({ sameCategory: [], otherCategory: [] });
+  const myCat = await db.prepare('SELECT category FROM app_categories WHERE user_id = ?').get(req.session.userId);
+  const category = myCat?.category || 'other';
+  const existingTradeIds = await db.prepare('SELECT to_app_id FROM trades WHERE from_app_id = ?').all(mine.id).then(r => r.map(x => x.to_app_id));
+  const allDevs = await db.prepare(`
+    SELECT a.*, ac.category, u.email FROM apps a 
+    LEFT JOIN app_categories ac ON ac.user_id = a.user_id
+    JOIN users u ON u.id = a.user_id
+    WHERE a.user_id != ?
+  `).all(req.session.userId);
+  const sameCategory = allDevs.filter(d => (d.category || 'other') === category && !existingTradeIds.includes(d.id));
+  const otherCategory = allDevs.filter(d => (d.category || 'other') !== category && !existingTradeIds.includes(d.id));
+  res.json({ sameCategory, otherCategory, myCategory: category });
 }));
 
 /* ---------- app categories ---------- */

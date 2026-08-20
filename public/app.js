@@ -528,16 +528,6 @@ async function renderDashboard() {
       <p class="note-line">Post it in dev Discords, r/AndroidClosedTesting and r/androiddev, and offer swaps here so it flows both ways.</p>
     </div>`;
 
-    <div class="card">
-      <h3>Invite link</h3>
-      <div class="copy-line">
-        <input id="inviteUrl" value="${esc(app.inviteLink)}" readonly aria-label="Your invite link">
-        <button class="btn ghost small" id="copyLink">Copy</button>
-        <button class="btn small" id="shareLink">Copy share line</button>
-      </div>
-      <p class="note-line">Post it in dev Discords, r/AndroidClosedTesting and r/androiddev, and offer swaps here so it flows both ways.</p>
-    </div>`;
-
   if (started && !eligible) {
     const tick = () => {
       const box = document.getElementById('clock-box');
@@ -728,12 +718,46 @@ async function renderDashboard() {
 
 /* ---------- community ---------- */
 
+function renderDevCard(d, devs) {
+  const meApp = meData.app;
+  const trade = d.trade;
+  let action = '';
+  if (!meApp) {
+    action = `<a href="#/dashboard" class="btn ghost small">Register your app first</a>`;
+  } else if (trade) {
+    if (trade.status === 'joined') action = `<span class="badge yours">you're testing theirs ✓</span>`;
+    else if (trade.status === 'confirmed') action = `<span class="badge yours">swap complete ✓</span>`;
+    else action = `<button class="btn small amber" data-joined="${trade.id}">Mark joined</button>`;
+  } else {
+    action = `<button class="btn ghost small" data-offer="${d.id}">Offer a swap</button>`;
+  }
+  return `
+    <div class="dev-card" data-dev-id="${d.id}" data-category="${esc(d.category || 'other')}">
+      <div class="dname">
+        <h3>${esc(d.appName)}</h3>
+        ${d.optedIn >= 12 ? '<span class="badge yours">12/12</span>' : `<span class="badge ${d.optedIn >= 6 ? 'theirs' : 'gray'}">${d.optedIn}/${NEED}</span>`}
+      </div>
+      <span class="pkg">${esc(d.packageName)}</span>
+      ${d.description ? `<p class="ddesc">${esc(d.description)}</p>` : ''}
+      ${progressBarHTML(d.optedIn, 'their test')}
+      <div class="dmeta">
+        ${d.startDate ? '<span class="badge gray">clock running</span>' : ''}
+        <span class="mono-sm muted">${esc(d.ownerEmail)}</span>
+        <span class="rep-badges"></span>
+      </div>
+      <div class="dacts">
+        <a class="btn small" target="_blank" rel="noopener" href="${esc(d.inviteLink)}">Open invite</a>
+        ${action}
+      </div>
+    </div>`;
+}
+
 async function renderBrowse() {
   await refreshMe();
   if (!meData.user) { location.hash = '#/login'; return renderLogin(); }
   setMeta('Community: TesterSwap', 'Browse other Android devs looking to trade closed-test signups. Offer a test-for-test swap.');
   view.innerHTML = `<div class="spinner">Loading the community</div>`;
-  const devs = await api('/devs');
+  const [devs, matches] = await Promise.all([api('/devs'), api('/matches').catch(() => null)]);
   if (!devs.length) {
     view.innerHTML = `
       <h1>Community</h1>
@@ -753,6 +777,15 @@ async function renderBrowse() {
       <h3 style="color:var(--theirs)">The golden rule</h3>
       <p class="small muted">Only claim a swap if you'll really join and stay opted in for the full 14 days. The desk runs on karma.</p>
     </div>
+    ${matches && matches.sameCategory.length ? `
+    <div class="card" style="border-color:color-mix(in srgb, var(--yours) 40%, var(--border))">
+      <h3 style="color:var(--yours)">Recommended for you</h3>
+      <p class="small muted" style="margin-bottom:12px">Same category (${esc(matches.myCategory)}) — swap partners who build similar apps.</p>
+      <div class="devs-grid">
+        ${matches.sameCategory.map(d => renderDevCard(d, devs)).join('')}
+      </div>
+    </div>` : ''}
+
     <div class="category-filter" id="catFilter">
       <button class="btn small ghost active" data-cat="all">All</button>
       <button class="btn small ghost" data-cat="productivity">Productivity</button>
@@ -764,38 +797,7 @@ async function renderBrowse() {
       <button class="btn small ghost" data-cat="other">Other</button>
     </div>
     <div class="devs-grid">
-      ${devs.map(d => {
-        const trade = d.trade;
-        let action = '';
-        if (!meApp) {
-          action = `<a href="#/dashboard" class="btn ghost small">Register your app first</a>`;
-        } else if (trade) {
-          if (trade.status === 'joined') action = `<span class="badge yours">you're testing theirs ✓</span>`;
-          else if (trade.status === 'confirmed') action = `<span class="badge yours">swap complete ✓</span>`;
-          else action = `<button class="btn small amber" data-joined="${trade.id}">Mark joined</button>`;
-        } else {
-          action = `<button class="btn ghost small" data-offer="${d.id}">Offer a swap</button>`;
-        }
-        return `
-          <div class="dev-card" data-dev-id="${d.id}" data-category="${esc(d.category || 'other')}">
-            <div class="dname">
-              <h3>${esc(d.appName)}</h3>
-              ${d.optedIn >= 12 ? '<span class="badge yours">12/12</span>' : `<span class="badge ${d.optedIn >= 6 ? 'theirs' : 'gray'}">${d.optedIn}/${NEED}</span>`}
-            </div>
-            <span class="pkg">${esc(d.packageName)}</span>
-            ${d.description ? `<p class="ddesc">${esc(d.description)}</p>` : ''}
-            ${progressBarHTML(d.optedIn, 'their test')}
-            <div class="dmeta">
-              ${d.startDate ? '<span class="badge gray">clock running</span>' : ''}
-              <span class="mono-sm muted">${esc(d.ownerEmail)}</span>
-              <span class="rep-badges"></span>
-            </div>
-            <div class="dacts">
-              <a class="btn small" target="_blank" rel="noopener" href="${esc(d.inviteLink)}">Open invite</a>
-              ${action}
-            </div>
-          </div>`;
-      }).join('')}
+      ${devs.map(d => renderDevCard(d, devs)).join('')}
     </div>`;
   view.querySelectorAll('[data-offer]').forEach(b => b.addEventListener('click', safe(async () => {
     await api('/trades', 'POST', { appId: b.dataset.offer });
