@@ -190,46 +190,61 @@ function renderLanding() {
   setMeta('TesterSwap: Trade Android closed-test signups', 'Reach Google Play\'s 12-testers / 14-days closed testing requirement. Trade closed-test signups with other Android devs, real people, mutual testing, zero fakes.');
   view.innerHTML = `
     <section class="hero">
-      <p class="eyebrow">the 12/14 closed-testing gauntlet</p>
-      <h1>Twelve real humans. Fourteen long days.<br>One fair <em>swap</em> at a time.</h1>
-      <p class="lede">Google Play requires 12 testers opted into your closed test for 14 days before you can ship to production. TesterSwap pairs you with other devs who need the same. You test theirs, they test yours. No fakes, no bots, no paid installs.</p>
-      <div class="hero-ctas">
-        ${meData.user
-          ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a><span class="mono-sm muted" style="align-self:center">signed in as ${esc(meData.user.email)}</span>`
-          : `<a href="#/register" class="btn">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">the 12/14 closed-testing gauntlet</p>
+          <h1>Twelve real humans. Fourteen long days.<br>One fair <em>swap</em> at a time.</h1>
+          <p class="lede">Google Play requires 12 testers opted into your closed test for 14 days before you can ship to production. TesterSwap pairs you with other devs who need the same. You test theirs, they test yours. No fakes, no bots, no paid installs.</p>
+          <div class="hero-ctas">
+            ${meData.user
+              ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a><span class="mono-sm muted" style="align-self:center">signed in as ${esc(meData.user.email)}</span>`
+              : `<a href="#/register" class="btn">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
+          </div>
+          <div class="social-proof">
+            <div class="proof-stat"><span class="proof-num" id="proof-devs">--</span><span class="proof-label">developers</span></div>
+            <div class="proof-stat"><span class="proof-num" id="proof-swaps">--</span><span class="proof-label">swaps completed</span></div>
+            <div class="proof-stat"><span class="proof-num" id="proof-shipped">--</span><span class="proof-label">shipped to production</span></div>
+          </div>
+        </div>
+        <div class="hero-demo" id="hero-demo">
+          <div class="term-head">
+            <span class="term-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term-title mono">SWAP://LIVE</span>
+            <span class="live-tag mono"><span class="live-dot" aria-hidden="true"></span>LIVE</span>
+          </div>
+          <div class="term-body">
+            <div class="demo-row">
+              <div class="appline"><strong>Habit Forge</strong><span class="mono">com.your.dev.app</span></div>
+              <div id="demo-meter-a"></div>
+            </div>
+            <div class="demo-row">
+              <div class="appline"><strong>Weather Buddy</strong><span class="mono">com.their.dev.app</span></div>
+              <div id="demo-meter-b"></div>
+            </div>
+            <div class="demo-result" id="demo-result">Click execute swap. This is the whole loop.</div>
+          </div>
+          <div class="term-log" id="term-log" aria-hidden="true"></div>
+          <div class="term-foot">
+            <button class="btn amber" id="demo-swap">⇄ Execute swap</button>
+            <span class="term-hint mono">one tester joins each side</span>
+          </div>
+        </div>
       </div>
-      <div class="social-proof">
-        <div class="proof-stat"><span class="proof-num" id="proof-devs">--</span><span class="proof-label">developers</span></div>
-        <div class="proof-stat"><span class="proof-num" id="proof-swaps">--</span><span class="proof-label">swaps completed</span></div>
-        <div class="proof-stat"><span class="proof-num" id="proof-shipped">--</span><span class="proof-label">shipped to production</span></div>
-      </div>
-      <div class="hero-demo" id="hero-demo">
-        <div class="demo-head">
-          <span class="eyebrow" style="letter-spacing:0.14em">live demo</span>
-          <button class="btn small amber" id="demo-swap">⇄ Swap with them</button>
-        </div>
-        <div class="demo-row">
-          <div class="appline"><strong>Habit Forge</strong><span class="mono">com.your.dev.app</span></div>
-          <div id="demo-meter-a"></div>
-        </div>
-        <div class="demo-row">
-          <div class="appline"><strong>Weather Buddy</strong><span class="mono">com.their.dev.app</span></div>
-          <div id="demo-meter-b"></div>
-        </div>
-        <div class="demo-result" id="demo-result">Click the swap button. This is the whole loop.</div>
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-track" id="ticker-track"></div>
       </div>
     </section>
 
     <div class="wrap">
-      <div class="section-head"><h2 data-num="01">How it works</h2><span class="mono-sm muted">a real sequence, in order</span></div>
-      <div class="steps">
+      <div class="section-head reveal"><h2 data-num="01">How it works</h2><span class="mono-sm muted">a real sequence, in order</span></div>
+      <div class="steps reveal">
         <div class="step"><h3>Set up</h3><p>Create your closed test in Play Console and paste the invite link into your profile.</p></div>
         <div class="step"><h3>Swap</h3><p>Browse the community and offer a test-for-test trade. You join theirs, they join yours.</p></div>
         <div class="step"><h3>Track</h3><p>Mark every opt-in as it lands. The 14-day clock starts the moment you reach 12.</p></div>
         <div class="step"><h3>Ship</h3><p>Watch the gates go green, then promote to production. That's it.</p></div>
       </div>
 
-      <div class="rules-grid">
+      <div class="rules-grid reveal">
         <div class="card">
           <h3>What Play actually requires</h3>
           <ul class="rule-list">
@@ -259,7 +274,7 @@ function renderLanding() {
     } else if (a.n >= NEED) {
       res.textContent = 'You\'re at 12. Now keep testing theirs so they reach it too.';
     } else {
-      res.textContent = 'Click the swap button. This is the whole loop.';
+      res.textContent = 'Click execute swap. This is the whole loop.';
     }
   };
   draw();
@@ -267,18 +282,86 @@ function renderLanding() {
     a.n = Math.min(NEED, a.n + 1);
     b.n = Math.min(NEED, b.n + 1);
     draw();
+    logFeed('swap executed', 'yours ⇄ theirs');
     if (a.n >= NEED && b.n >= NEED) document.getElementById('demo-swap').disabled = true;
   });
 
+  // live terminal feed
+  const log = document.getElementById('term-log');
+  const logEvents = [
+    ['@mira_dev', 'opted in · Habit Forge'],
+    ['Habit Forge', '⇄ matched · Weather Buddy'],
+    ['quota', '12/12 both sides'],
+    ['@jose.flores', 'opted in · Weather Buddy'],
+    ['clock', '14-day timer armed'],
+    ['review', 'release gate passed'],
+    ['Habit Forge', '→ production']
+  ];
+  let li = 0;
+  const logFeed = (what, detail) => {
+    if (!log) return;
+    const now = new Date().toTimeString().slice(0, 8);
+    const row = document.createElement('div');
+    row.className = 'log-line';
+    row.innerHTML = `<span class="log-ts">${now}</span><span class="log-txt">${esc(what)} ${detail ? '<span class="log-arrow">' + esc(detail) + '</span>' : ''}</span>`;
+    log.prepend(row);
+    while (log.children.length > 5) log.removeChild(log.lastChild);
+  };
+  if (window._termIv) clearInterval(window._termIv);
+  window._termIv = setInterval(() => {
+    const ev = logEvents[li % logEvents.length];
+    logFeed(ev[0], ev[1]);
+    li++;
+  }, 2600);
+
+  // ticker tape
+  const tickerTrack = document.getElementById('ticker-track');
+  if (tickerTrack) {
+    const pairs = [
+      ['Habit Forge', 'Weather Buddy'], ['TaskFlow', 'Pocket Notes'],
+      ['Trail Runner', 'Grocery Pal'], ['Focus Timer', 'Meal Plan Pro'],
+      ['Ledger Lite', 'Habit Forge'], ['Weather Buddy', 'Trail Runner'],
+      ['Brew Log', 'TaskFlow'], ['Pocket Notes', 'Focus Timer'],
+      ['Grocery Pal', 'Ledger Lite'], ['Meal Plan Pro', 'Brew Log']
+    ];
+    const times = ['now', '1m', '3m', '6m', '12m', '24m', '41m', '1h', '2h', '3h'];
+    const chips = pairs.map((p, i) =>
+      `<span class="tick-item"><b class="tick-a">${p[0]}</b><span class="tick-arrow">⇄</span><b class="tick-b">${p[1]}</b><span class="tick-time">${times[i % times.length]}</span></span>`);
+    tickerTrack.innerHTML = chips.join('') + chips.join(''); // duplicated for seamless loop
+  }
+
+  // count-up social proof
+  const countUp = (el, target) => {
+    if (!el || el.dataset.counted) return;
+    el.dataset.counted = '1';
+    const dur = 900, t0 = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
   // Social proof stats
   api('/social/stats').then(s => {
+    countUp(document.getElementById('proof-devs'), s.totalDevs || 0);
+    countUp(document.getElementById('proof-swaps'), s.completedSwaps || 0);
+    countUp(document.getElementById('proof-shipped'), s.shippedApps || 0);
+  }).catch(() => {
     const d = document.getElementById('proof-devs');
-    const sw = document.getElementById('proof-swaps');
-    const sh = document.getElementById('proof-shipped');
-    if (d) d.textContent = s.totalDevs || '0';
-    if (sw) sw.textContent = s.completedSwaps || '0';
-    if (sh) sh.textContent = s.shippedApps || '0';
-  }).catch(() => {});
+    if (d) d.textContent = '0';
+  });
+
+  // scroll reveal
+  if (!window._revealIo) {
+    window._revealIo = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('in'); window._revealIo.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+  }
+  document.querySelectorAll('.reveal').forEach(el => window._revealIo.observe(el));
 }
 
 /* ---------- auth ---------- */
