@@ -198,6 +198,11 @@ function renderLanding() {
           ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a><span class="mono-sm muted" style="align-self:center">signed in as ${esc(meData.user.email)}</span>`
           : `<a href="#/register" class="btn">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
       </div>
+      <div class="social-proof">
+        <div class="proof-stat"><span class="proof-num" id="proof-devs">--</span><span class="proof-label">developers</span></div>
+        <div class="proof-stat"><span class="proof-num" id="proof-swaps">--</span><span class="proof-label">swaps completed</span></div>
+        <div class="proof-stat"><span class="proof-num" id="proof-shipped">--</span><span class="proof-label">shipped to production</span></div>
+      </div>
       <div class="hero-demo" id="hero-demo">
         <div class="demo-head">
           <span class="eyebrow" style="letter-spacing:0.14em">live demo</span>
@@ -264,6 +269,16 @@ function renderLanding() {
     draw();
     if (a.n >= NEED && b.n >= NEED) document.getElementById('demo-swap').disabled = true;
   });
+
+  // Social proof stats
+  api('/social/stats').then(s => {
+    const d = document.getElementById('proof-devs');
+    const sw = document.getElementById('proof-swaps');
+    const sh = document.getElementById('proof-shipped');
+    if (d) d.textContent = s.totalDevs || '0';
+    if (sw) sw.textContent = s.completedSwaps || '0';
+    if (sh) sh.textContent = s.shippedApps || '0';
+  }).catch(() => {});
 }
 
 /* ---------- auth ---------- */
@@ -355,6 +370,18 @@ async function renderDashboard() {
           <input id="inviteLink" placeholder="https://play.google.com/apps/testing/...">
           <label for="description">What's your app about? (optional)</label>
           <input id="description" placeholder="One line for the community">
+          <label for="appCategory">Category (helps find the right swap partners)</label>
+          <select id="appCategory" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg)">
+            <option value="productivity">Productivity</option>
+            <option value="social">Social</option>
+            <option value="games">Games</option>
+            <option value="health">Health & Fitness</option>
+            <option value="finance">Finance</option>
+            <option value="education">Education</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="utilities">Utilities</option>
+            <option value="other" selected>Other</option>
+          </select>
           <button class="btn" id="save" style="width:100%">Save app</button>
         </div>
       </div>`;
@@ -374,6 +401,8 @@ async function renderDashboard() {
         inviteLink: link,
         description: document.getElementById('description').value.trim()
       });
+      const cat = document.getElementById('appCategory').value;
+      await api('/category', 'PUT', { category: cat }).catch(() => {});
       toast('App registered.');
       renderDashboard();
     }));
@@ -461,6 +490,27 @@ async function renderDashboard() {
       </div>
     </div>
 
+    ${started ? `
+    <div class="card" style="margin-top:18px">
+      <h3>Engagement tracker <span class="badge ${app.optedIn >= NEED ? 'yours' : 'gray'}">active</span></h3>
+      <p class="small muted" style="margin-bottom:12px">Daily check-ins show who's still engaged. Stale testers (no check-in for 2+ days) risk your 14-day streak.</p>
+      <div id="checkin-list"></div>
+      <div class="checkin-actions" style="margin-top:12px">
+        <button class="btn small" id="checkinAll">Check in all testers</button>
+        <button class="btn ghost small" id="viewReport">View compliance report</button>
+      </div>
+    </div>` : ''}
+
+    <div class="card" style="margin-top:18px">
+      <h3>Invite link</h3>
+      <div class="copy-line">
+        <input id="inviteUrl" value="${esc(app.inviteLink)}" readonly aria-label="Your invite link">
+        <button class="btn ghost small" id="copyLink">Copy</button>
+        <button class="btn small" id="shareLink">Copy share line</button>
+      </div>
+      <p class="note-line">Post it in dev Discords, r/AndroidClosedTesting and r/androiddev, and offer swaps here so it flows both ways.</p>
+    </div>`;
+
     <div class="card">
       <h3>Invite link</h3>
       <div class="copy-line">
@@ -543,6 +593,75 @@ async function renderDashboard() {
     }));
   });
 
+  // Check-in list
+  const checkinList = document.getElementById('checkin-list');
+  if (checkinList && started) {
+    try {
+      const checkinData = await api('/checkins/' + app.id);
+      if (checkinData.testers.length) {
+        checkinList.innerHTML = checkinData.testers.map(t => `
+          <div class="checkin-row ${t.isStale ? 'stale' : ''}">
+            <span class="tname">${esc(t.name)}</span>
+            <span class="checkin-bar"><span style="width:${Math.round(t.score * 100)}%"></span></span>
+            <span class="checkin-num">${t.daysChecked}/${Math.min(checkinData.elapsed, DAYS)}d</span>
+            ${t.isStale ? '<span class="badge bad">stale</span>' : '<span class="badge yours">active</span>'}
+          </div>`).join('');
+      } else {
+        checkinList.innerHTML = '<p class="small muted">No check-ins recorded yet. Use "Check in all testers" to track daily engagement.</p>';
+      }
+    } catch { checkinList.innerHTML = ''; }
+
+    document.getElementById('checkinAll')?.addEventListener('click', safe(async () => {
+      const checkinData = await api('/checkins/' + app.id);
+      for (const t of checkinData.testers) {
+        await api('/checkins', 'POST', { testerId: t.id, appId: app.id }).catch(() => {});
+      }
+      toast('Check-ins recorded.');
+      renderDashboard();
+    }));
+
+    document.getElementById('viewReport')?.addEventListener('click', safe(async () => {
+      const report = await api('/report/' + app.id);
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal card" style="max-width:700px">
+          <div class="modal-head">
+            <h2>Compliance Report</h2>
+            <button class="btn ghost small" onclick="this.closest('.modal-overlay').remove()">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="mono-sm muted">Generated: ${report.summary.eligibleForProduction ? 'READY FOR PRODUCTION' : `${report.summary.elapsedDays}/${DAYS} days elapsed`}</p>
+            <div class="report-grid">
+              <div class="report-stat"><span class="report-num">${report.summary.optedIn}</span><span>opted in</span></div>
+              <div class="report-stat"><span class="report-num">${report.summary.elapsedDays}/${DAYS}</span><span>days</span></div>
+              <div class="report-stat"><span class="report-num">${report.completedSwaps}</span><span>swaps</span></div>
+              <div class="report-stat"><span class="report-num">${report.summary.eligibleForProduction ? '✓' : '—'}</span><span>eligible</span></div>
+            </div>
+            <h3 style="margin:18px 0 8px">Tester breakdown</h3>
+            <div class="report-testers">
+              ${report.testers.map(t => `
+                <div class="report-tester">
+                  <span>${esc(t.name)}</span>
+                  <span class="mono-sm">${Math.round(t.checkinRate * 100)}% check-in</span>
+                  <span class="mono-sm">${t.checkins.length} check-ins</span>
+                </div>`).join('')}
+            </div>
+            <h3 style="margin:18px 0 8px">Questionnaire hints</h3>
+            <ul class="report-hints">${report.questionnaireHints.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+            <button class="btn small" id="copyReport">Copy report</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      document.getElementById('copyReport')?.addEventListener('click', async () => {
+        const text = `TesterSwap Compliance Report\nApp: ${report.appName} (${report.packageName})\nStarted: ${report.testStarted}\nTesters: ${report.summary.optedIn}/${report.summary.requiredTesters}\nDays: ${report.summary.elapsedDays}/${report.summary.requiredDays}\nEligible: ${report.summary.eligibleForProduction}\n\nTester breakdown:\n${report.testers.map(t => `- ${t.name}: ${Math.round(t.checkinRate * 100)}% check-in rate`).join('\n')}\n\nQuestionnaire:\n${report.questionnaireHints.join('\n')}`;
+        await navigator.clipboard.writeText(text);
+        toast('Report copied.');
+      });
+    }));
+  }
+
   const trades = await api('/trades');
   const tradesEl = document.getElementById('trades');
   const wallCount = document.getElementById('wall-count');
@@ -606,7 +725,7 @@ async function renderBrowse() {
     return;
   }
   const meApp = meData.app;
-  view.innerHTML = `
+      view.innerHTML = `
     <div class="page-head">
       <div>
         <h1>Community</h1>
@@ -616,6 +735,16 @@ async function renderBrowse() {
     <div class="card" style="border-color:color-mix(in srgb, var(--theirs) 40%, var(--border))">
       <h3 style="color:var(--theirs)">The golden rule</h3>
       <p class="small muted">Only claim a swap if you'll really join and stay opted in for the full 14 days. The desk runs on karma.</p>
+    </div>
+    <div class="category-filter" id="catFilter">
+      <button class="btn small ghost active" data-cat="all">All</button>
+      <button class="btn small ghost" data-cat="productivity">Productivity</button>
+      <button class="btn small ghost" data-cat="social">Social</button>
+      <button class="btn small ghost" data-cat="games">Games</button>
+      <button class="btn small ghost" data-cat="health">Health</button>
+      <button class="btn small ghost" data-cat="education">Education</button>
+      <button class="btn small ghost" data-cat="utilities">Utilities</button>
+      <button class="btn small ghost" data-cat="other">Other</button>
     </div>
     <div class="devs-grid">
       ${devs.map(d => {
@@ -631,7 +760,7 @@ async function renderBrowse() {
           action = `<button class="btn ghost small" data-offer="${d.id}">Offer a swap</button>`;
         }
         return `
-          <div class="dev-card">
+          <div class="dev-card" data-dev-id="${d.id}" data-category="${esc(d.category || 'other')}">
             <div class="dname">
               <h3>${esc(d.appName)}</h3>
               ${d.optedIn >= 12 ? '<span class="badge yours">12/12</span>' : `<span class="badge ${d.optedIn >= 6 ? 'theirs' : 'gray'}">${d.optedIn}/${NEED}</span>`}
@@ -642,6 +771,7 @@ async function renderBrowse() {
             <div class="dmeta">
               ${d.startDate ? '<span class="badge gray">clock running</span>' : ''}
               <span class="mono-sm muted">${esc(d.ownerEmail)}</span>
+              <span class="rep-badges"></span>
             </div>
             <div class="dacts">
               <a class="btn small" target="_blank" rel="noopener" href="${esc(d.inviteLink)}">Open invite</a>
@@ -660,6 +790,29 @@ async function renderBrowse() {
     toast('Marked joined. They can now confirm your opt-in.');
     renderBrowse();
   })));
+
+  // Category filter
+  view.querySelectorAll('#catFilter button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      view.querySelectorAll('#catFilter button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      view.querySelectorAll('.dev-card').forEach(card => {
+        card.style.display = (cat === 'all' || card.dataset.category === cat) ? '' : 'none';
+      });
+    });
+  });
+
+  // Load reputation for each dev
+  devs.forEach(async d => {
+    try {
+      const rep = await api('/reputation/' + d.ownerUserId);
+      const badgeEl = document.querySelector(`.dev-card[data-dev-id="${d.id}"] .rep-badges`);
+      if (badgeEl && rep.badges.length) {
+        badgeEl.innerHTML = rep.badges.map(b => `<span class="badge yours" title="${b.label}">${b.icon}</span>`).join('');
+      }
+    } catch {}
+  });
 }
 
 /* ---------- settings ---------- */
@@ -1225,6 +1378,51 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   location.hash = '#/';
   navigate();
 });
+
+// Notification bell
+const notifBtn = document.getElementById('notif-btn');
+const notifBadge = document.getElementById('notif-badge');
+async function checkNotifications() {
+  if (!meData.user) { notifBtn.hidden = true; return; }
+  try {
+    const { unread } = await api('/notifications');
+    notifBtn.hidden = false;
+    notifBadge.hidden = unread === 0;
+    notifBtn.onclick = async () => {
+      const { notifications } = await api('/notifications');
+      if (!notifications.length) return toast('No notifications yet.');
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal card" style="max-width:500px">
+          <div class="modal-head">
+            <h2>Notifications</h2>
+            <button class="btn ghost small" onclick="this.closest('.modal-overlay').remove()">✕</button>
+          </div>
+          <div class="modal-body">
+            ${notifications.map(n => `
+              <div class="checkin-row ${n.read ? '' : 'stale'}" style="border-bottom:1px solid var(--border);padding:10px 0">
+                <div style="flex:1">
+                  <strong>${esc(n.title)}</strong>
+                  <p class="small muted" style="margin:2px 0 0">${esc(n.body)}</p>
+                  <span class="mono-sm muted">${timeAgo(n.created_at)}</span>
+                </div>
+              </div>`).join('')}
+            <button class="btn small" id="markAllRead" style="margin-top:14px">Mark all read</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      document.getElementById('markAllRead')?.addEventListener('click', async () => {
+        await api('/notifications/read-all', 'POST');
+        notifBadge.hidden = true;
+        modal.remove();
+        toast('All marked read.');
+      });
+    };
+  } catch { notifBtn.hidden = true; }
+}
+checkNotifications();
 
 window.addEventListener('hashchange', navigate);
 navigate();

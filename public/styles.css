@@ -532,6 +532,60 @@ input.invalid:focus { border-color: var(--bad); }
 .composer-platforms { display: flex; gap: 8px; margin-bottom: 14px; }
 .composer-actions { display: flex; gap: 10px; margin-top: 14px; justify-content: flex-end; }
 
+/* ============ SOCIAL PROOF ============ */
+
+.social-proof {
+  display: flex; gap: 32px; justify-content: center; margin-top: 28px; flex-wrap: wrap;
+}
+.proof-stat { text-align: center; }
+.proof-num { display: block; font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--yours); }
+.proof-label { font-size: 0.82rem; color: var(--muted); }
+
+/* ============ CHECK-INS ============ */
+
+.checkin-row {
+  display: flex; align-items: center; gap: 12px; padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.checkin-row.stale { opacity: 0.6; }
+.checkin-bar {
+  flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.checkin-bar span { display: block; height: 100%; background: var(--yours); border-radius: 3px; transition: width 0.3s; }
+.checkin-num { font-family: var(--font-mono); font-size: 0.82rem; min-width: 40px; text-align: right; }
+.checkin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ============ CATEGORY FILTER ============ */
+
+.category-filter {
+  display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+
+/* ============ COMPLIANCE REPORT ============ */
+
+.report-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 14px 0;
+}
+.report-stat { text-align: center; }
+.report-num { display: block; font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--yours); }
+.report-tester {
+  display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.report-hints { padding-left: 18px; }
+.report-hints li { margin-bottom: 6px; font-size: 0.9rem; color: var(--muted); }
+
+/* ============ NOTIFICATION DOT ============ */
+
+.notif-dot {
+  width: 8px; height: 8px; background: var(--theirs); border-radius: 50%;
+  display: inline-block; margin-left: 4px; vertical-align: middle;
+}
+
+/* ============ BADGE.bad ============ */
+
+.badge.bad { background: #dc3545; color: #fff; }
+
 /* ============ ACCESSIBILITY ============ */
 
 @media (prefers-reduced-motion: reduce) {

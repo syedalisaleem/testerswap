@@ -119,6 +119,35 @@ const SCHEMA = [
     key TEXT PRIMARY KEY,
     count INTEGER DEFAULT 1,
     window_start BIGINT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS checkins (
+    id TEXT PRIMARY KEY,
+    tester_id TEXT NOT NULL REFERENCES testers(id) ON DELETE CASCADE,
+    app_id TEXT NOT NULL REFERENCES apps(id) ON DELETE CASCADE,
+    day_number INTEGER NOT NULL,
+    checked_in_at BIGINT NOT NULL,
+    UNIQUE (tester_id, day_number)
+  )`,
+  `CREATE TABLE IF NOT EXISTS app_categories (
+    user_id TEXT PRIMARY KEY REFERENCES users(id),
+    category TEXT DEFAULT 'other',
+    subcategory TEXT DEFAULT ''
+  )`,
+  `CREATE TABLE IF NOT EXISTS swap_completions (
+    id TEXT PRIMARY KEY,
+    trade_id TEXT NOT NULL REFERENCES trades(id) ON DELETE CASCADE,
+    from_user_id TEXT NOT NULL REFERENCES users(id),
+    to_user_id TEXT NOT NULL REFERENCES users(id),
+    completed_at BIGINT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    read INTEGER DEFAULT 0,
+    created_at BIGINT NOT NULL
   )`
 ];
 
@@ -208,6 +237,7 @@ function contactLimit(req, res, next) {
 
 const ah = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+const DAY = 86400000;
 const now = () => Date.now();
 const fmt = (ts) => {
   const d = new Date(Number(ts));
@@ -344,13 +374,16 @@ app.patch('/api/checklist', requireAuth, ah(async (req, res) => {
 app.get('/api/devs', requireAuth, ah(async (req, res) => {
   const mine = await db.prepare('SELECT id FROM apps WHERE user_id = ?').get(req.session.userId);
   const rows = await db.prepare(`
-    SELECT a.*, u.email FROM apps a JOIN users u ON u.id = a.user_id WHERE a.user_id != ?
+    SELECT a.*, u.email, ac.category, ac.subcategory FROM apps a 
+    JOIN users u ON u.id = a.user_id 
+    LEFT JOIN app_categories ac ON ac.user_id = a.user_id
+    WHERE a.user_id != ?
   `).all(req.session.userId);
   const out = [];
   for (const r of rows) {
     const summary = await appSummary(r);
     const trade = mine ? await db.prepare('SELECT * FROM trades WHERE from_app_id = ? AND to_app_id = ?').get(mine.id, r.id) : null;
-    out.push({ ...summary, ownerEmail: r.email, trade });
+    out.push({ ...summary, ownerEmail: r.email, ownerUserId: r.user_id, category: r.category || 'other', trade });
   }
   res.json(out);
 }));
@@ -438,6 +471,170 @@ app.post('/api/contact', contactLimit, ah(async (req, res) => {
   await db.prepare('INSERT INTO contact_messages (id, name, email, topic, message, created_at) VALUES (?, ?, ?, ?, ?, ?)')
     .run(randomUUID(), String(name).slice(0, 100), String(email).toLowerCase(), String(topic).slice(0, 60), String(message).slice(0, 2000), now());
   res.json({ ok: true });
+}));
+
+/* ---------- daily check-ins ---------- */
+
+app.get('/api/checkins/:appId', requireAuth, ah(async (req, res) => {
+  const appRow = await db.prepare('SELECT * FROM apps WHERE id = ? AND user_id = ?').get(req.params.appId, req.session.userId);
+  if (!appRow) return res.status(404).json({ error: 'App not found' });
+  const testers = await db.prepare('SELECT * FROM testers WHERE app_id = ? AND status = ?').all(appRow.id, 'opted_in');
+  const checkins = await db.prepare('SELECT * FROM checkins WHERE app_id = ?').all(appRow.id);
+  const elapsed = appRow.test_started_at ? Math.floor((Date.now() - Number(appRow.test_started_at)) / DAY) : 0;
+  const result = testers.map(t => {
+    const tCheckins = checkins.filter(c => c.tester_id === t.id);
+    const daysChecked = tCheckins.length;
+    const lastCheckin = tCheckins.length ? tCheckins.sort((a, b) => b.day_number - a.day_number)[0] : null;
+    const isStale = lastCheckin ? (Date.now() - Number(lastCheckin.checked_in_at)) > DAY * 2 : elapsed > 2;
+    return {
+      id: t.id, name: t.name, email: t.email,
+      daysChecked, totalDays: Math.min(elapsed, REQUIRED_DAYS),
+      isStale, lastCheckinAt: lastCheckin ? Number(lastCheckin.checked_in_at) : null,
+      score: daysChecked / Math.max(1, Math.min(elapsed, REQUIRED_DAYS))
+    };
+  });
+  const staleCount = result.filter(t => t.isStale).length;
+  const avgScore = result.length ? (result.reduce((s, t) => s + t.score, 0) / result.length) : 0;
+  res.json({ testers: result, elapsed, staleCount, avgScore, startedAt: appRow.test_started_at ? Number(appRow.test_started_at) : null });
+}));
+
+app.post('/api/checkins', requireAuth, ah(async (req, res) => {
+  const { testerId, appId } = req.body || {};
+  if (!testerId || !appId) return res.status(400).json({ error: 'testerId and appId required' });
+  const appRow = await db.prepare('SELECT * FROM apps WHERE id = ? AND user_id = ?').get(appId, req.session.userId);
+  if (!appRow) return res.status(404).json({ error: 'App not found' });
+  if (!appRow.test_started_at) return res.status(400).json({ error: 'Test not started yet' });
+  const tester = await db.prepare('SELECT * FROM testers WHERE id = ? AND app_id = ?').get(testerId, appId);
+  if (!tester) return res.status(404).json({ error: 'Tester not found' });
+  const elapsed = Math.floor((Date.now() - Number(appRow.test_started_at)) / DAY);
+  const dayNumber = Math.min(elapsed, REQUIRED_DAYS);
+  try {
+    await db.prepare('INSERT INTO checkins (id, tester_id, app_id, day_number, checked_in_at) VALUES (?, ?, ?, ?, ?)')
+      .run(randomUUID(), testerId, appId, dayNumber, now());
+  } catch (e) {
+    if (e.message.includes('UNIQUE')) return res.json({ ok: true, message: 'Already checked in today' });
+    throw e;
+  }
+  res.json({ ok: true, dayNumber });
+}));
+
+/* ---------- reputation ---------- */
+
+app.get('/api/reputation/:userId', requireAuth, ah(async (req, res) => {
+  const uid = req.params.userId;
+  const user = await db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(uid);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const appRow = await db.prepare('SELECT * FROM apps WHERE user_id = ?').get(uid);
+  let completedSwaps = 0, totalSwaps = 0, avgCheckinRate = 0;
+  if (appRow) {
+    totalSwaps = (await db.prepare('SELECT COUNT(*) AS c FROM trades WHERE from_app_id = ? OR to_app_id = ?').get(appRow.id, appRow.id)).c;
+    completedSwaps = (await db.prepare('SELECT COUNT(*) AS c FROM trades WHERE (from_app_id = ? OR to_app_id = ?) AND status = ?').get(appRow.id, appRow.id, 'confirmed')).c;
+    const checkins = await db.prepare('SELECT COUNT(*) AS c FROM checkins WHERE app_id = ?').get(appRow.id);
+    const testers = (await db.prepare('SELECT COUNT(*) AS c FROM testers WHERE app_id = ? AND status = ?').get(appRow.id, 'opted_in')).c;
+    if (testers > 0 && appRow.test_started_at) {
+      const elapsed = Math.min(Math.floor((Date.now() - Number(appRow.test_started_at)) / DAY), REQUIRED_DAYS);
+      avgCheckinRate = elapsed > 0 ? Number(checkins.c) / (testers * elapsed) : 0;
+    }
+  }
+  const trustScore = completedSwaps > 0 ? Math.min(100, Math.round(50 + (completedSwaps * 10) + (avgCheckinRate * 40))) : 0;
+  const badges = [];
+  if (completedSwaps >= 1) badges.push({ icon: '✓', label: 'First Swap' });
+  if (completedSwaps >= 5) badges.push({ icon: '★', label: 'Swap Veteran' });
+  if (completedSwaps >= 10) badges.push({ icon: '🏆', label: 'Swap Champion' });
+  if (avgCheckinRate >= 0.8) badges.push({ icon: '🔥', label: 'Reliable Tester' });
+  res.json({ userId: uid, email: user.email, completedSwaps, totalSwaps, trustScore, badges, avgCheckinRate: Math.round(avgCheckinRate * 100) });
+}));
+
+/* ---------- notifications ---------- */
+
+app.get('/api/notifications', requireAuth, ah(async (req, res) => {
+  const notes = await db.prepare('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50').all(req.session.userId);
+  const unread = notes.filter(n => !n.read).length;
+  res.json({ notifications: notes, unread });
+}));
+
+app.patch('/api/notifications/:id/read', requireAuth, ah(async (req, res) => {
+  await db.prepare('UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?').run(req.params.id, req.session.userId);
+  res.json({ ok: true });
+}));
+
+app.post('/api/notifications/read-all', requireAuth, ah(async (req, res) => {
+  await db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(req.session.userId);
+  res.json({ ok: true });
+}));
+
+/* ---------- app categories ---------- */
+
+app.put('/api/category', requireAuth, ah(async (req, res) => {
+  const { category, subcategory } = req.body || {};
+  const validCats = ['productivity', 'social', 'games', 'health', 'finance', 'education', 'entertainment', 'utilities', 'other'];
+  if (!validCats.includes(category)) return res.status(400).json({ error: 'Invalid category' });
+  await db.prepare(`INSERT INTO app_categories (user_id, category, subcategory) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET category = excluded.category, subcategory = excluded.subcategory`)
+    .run(req.session.userId, category, String(subcategory || '').slice(0, 50));
+  res.json({ ok: true });
+}));
+
+/* ---------- compliance report ---------- */
+
+app.get('/api/report/:appId', requireAuth, ah(async (req, res) => {
+  const appRow = await db.prepare('SELECT * FROM apps WHERE id = ? AND user_id = ?').get(req.params.appId, req.session.userId);
+  if (!appRow) return res.status(404).json({ error: 'App not found' });
+  const testers = await db.prepare('SELECT * FROM testers WHERE app_id = ? ORDER BY created_at ASC').all(appRow.id);
+  const checkins = await db.prepare('SELECT * FROM checkins WHERE app_id = ? ORDER BY checked_in_at ASC').all(appRow.id);
+  const trades = await db.prepare(`
+    SELECT t.*, a.app_name, a.package_name FROM trades t 
+    JOIN apps a ON (a.id = t.to_app_id OR a.id = t.from_app_id)
+    WHERE (t.from_app_id = ? OR t.to_app_id = ?) AND t.status = 'confirmed'
+  `).all(appRow.id, appRow.id);
+
+  const optedIn = testers.filter(t => t.status === 'opted_in');
+  const elapsed = appRow.test_started_at ? Math.floor((Date.now() - Number(appRow.test_started_at)) / DAY) : 0;
+  const daysComplete = elapsed >= REQUIRED_DAYS;
+
+  const report = {
+    appName: appRow.app_name,
+    packageName: appRow.package_name,
+    inviteLink: appRow.invite_link,
+    testStarted: appRow.test_started_at ? new Date(Number(appRow.test_started_at)).toISOString() : null,
+    reportGenerated: new Date().toISOString(),
+    summary: {
+      totalTesters: testers.length,
+      optedIn: optedIn.length,
+      requiredTesters: REQUIRED_TESTERS,
+      requiredDays: REQUIRED_DAYS,
+      elapsedDays: Math.min(elapsed, REQUIRED_DAYS),
+      daysComplete,
+      eligibleForProduction: optedIn.length >= REQUIRED_TESTERS && daysComplete
+    },
+    testers: optedIn.map(t => {
+      const tCheckins = checkins.filter(c => c.tester_id === t.id);
+      return {
+        name: t.name,
+        email: t.email,
+        joinedAt: t.joined_at ? new Date(Number(t.joined_at)).toISOString() : null,
+        checkins: tCheckins.map(c => ({ day: c.day_number, at: new Date(Number(c.checked_in_at)).toISOString() })),
+        checkinRate: tCheckins.length / Math.max(1, Math.min(elapsed, REQUIRED_DAYS))
+      };
+    }),
+    completedSwaps: trades.length,
+    questionnaireHints: daysComplete ? [
+      'The test ran for ' + REQUIRED_DAYS + ' consecutive days with ' + optedIn.length + ' opted-in testers.',
+      'Testers were recruited through TesterSwap, a test-for-test exchange community.',
+      'Tester feedback was collected via daily check-ins and structured feedback prompts.',
+      'Key issues found during testing were addressed in subsequent builds.'
+    ] : ['Test period not yet complete. ' + (REQUIRED_DAYS - elapsed) + ' days remaining.']
+  };
+
+  res.json(report);
+}));
+
+/* ---------- social stats (public) ---------- */
+
+app.get('/api/social/stats', ah(async (req, res) => {
+  const totalDevs = (await db.prepare('SELECT COUNT(*) AS c FROM users')).c;
+  const completedSwaps = (await db.prepare("SELECT COUNT(*) AS c FROM trades WHERE status = 'confirmed'")).c;
+  const shippedApps = (await db.prepare('SELECT COUNT(*) AS c FROM checklist WHERE review_passed = 1')).c;
+  res.json({ totalDevs, completedSwaps, shippedApps });
 }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true, app: APP_NAME }));
