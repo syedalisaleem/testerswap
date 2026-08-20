@@ -359,6 +359,18 @@ async function renderDashboard() {
         <p class="sub" style="margin-bottom:22px">Two things to do before you can trade.</p>
         <div class="step"><h3>Create the closed test</h3>
           <p>In Play Console: <span class="mono-sm">Release → Testing → Closed testing</span>, create a track, upload a build, add testers via email or invite link, and copy the invite URL.</p>
+          <div class="play-console-guide">
+            <p class="mono-sm muted" style="margin:8px 0 4px">Quick guide for Play Console:</p>
+            <ol style="padding-left:18px;font-size:0.85rem;color:var(--muted)">
+              <li>Go to <span class="mono-sm">play.google.com/console</span></li>
+              <li>Select your app → <span class="mono-sm">Release → Testing → Closed testing</span></li>
+              <li>Click <span class="mono-sm">Create closed testing track</span></li>
+              <li>Upload your AAB/APK build</li>
+              <li>Under "Testers", choose <span class="mono-sm">Email lists</span> or <span class="mono-sm">Opt-in URL</span></li>
+              <li>Copy the invite link (looks like <span class="mono-sm">https://play.google.com/apps/testing/...</span>)</li>
+            </ol>
+            <p class="small muted" style="margin-top:8px">Need help? Google's guide: <a href="https://support.google.com/googleplay/android-developer/answer/9859673" target="_blank" rel="noopener" style="color:var(--yours)">Set up closed testing</a></p>
+          </div>
         </div>
         <div class="card">
           <div id="err" class="inline-err" role="alert"></div>
@@ -434,6 +446,11 @@ async function renderDashboard() {
         <a class="btn small" href="#/settings">Draft messages</a>
       </div>
     </div>
+
+    ${started && opted < NEED ? `
+    <div class="buffer-alert">
+      <strong>⚠️ Buffer alert:</strong> You have ${opted} opt-ins but need ${NEED}. ${NEED - opted} tester${NEED - opted === 1 ? '' : 's'} dropped out or haven't joined yet. <a href="#/browse" style="color:var(--yours)">Find replacements →</a>
+    </div>` : ''}
 
     <div class="ledger-grid">
       <div class="led-box yours">
