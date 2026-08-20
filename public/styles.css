@@ -286,41 +286,59 @@ input.invalid { box-shadow: inset 0 0 0 2px var(--bad), 0 0 0 4px color-mix(in s
 
 /* ============ HERO ============ */
 
-.hero { text-align: center; padding: 80px 0 48px; position: relative; overflow: hidden; }
-.hero::before {
-  content: ''; position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
-  width: 900px; height: 600px; pointer-events: none; z-index: -1;
-  background:
-    radial-gradient(ellipse at 40% 40%, color-mix(in srgb, var(--yours) 14%, transparent), transparent 60%),
-    radial-gradient(ellipse at 70% 60%, color-mix(in srgb, var(--theirs) 8%, transparent), transparent 50%);
-  filter: blur(80px);
+.hero {
+  text-align: left; padding: 100px 0 48px; position: relative; overflow: visible;
 }
+.hero::before {
+  content: ''; position: absolute; top: -200px; left: -300px;
+  width: 1100px; height: 800px; pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(ellipse at 30% 50%, color-mix(in srgb, var(--yours) 16%, transparent), transparent 55%),
+    radial-gradient(ellipse at 80% 30%, color-mix(in srgb, var(--theirs) 10%, transparent), transparent 45%),
+    radial-gradient(circle at 60% 80%, color-mix(in srgb, var(--yours) 6%, transparent), transparent 40%);
+  filter: blur(60px);
+}
+/* decorative floating accent — bleeds off the right edge */
+.hero::after {
+  content: ''; position: absolute; top: 40px; right: -60px;
+  width: 200px; height: 200px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--theirs) 12%, transparent), transparent 70%);
+  filter: blur(40px); animation: float-slow 8s ease-in-out infinite alternate;
+}
+@keyframes float-slow { from { transform: translateY(0) scale(1); } to { transform: translateY(-20px) scale(1.08); } }
 .hero h1 {
-  font-size: clamp(2.8rem, 7.5vw, 5.2rem); font-weight: 800; max-width: 920px;
-  margin: 0 auto; letter-spacing: -0.05em; line-height: 1.05;
+  font-size: clamp(3rem, 8.5vw, 5.8rem); font-weight: 800; max-width: 780px;
+  letter-spacing: -0.055em; line-height: 1.02;
 }
 .hero h1 em {
   font-style: normal; color: var(--yours); position: relative; display: inline-block;
 }
 .hero h1 em::after {
-  content: ''; position: absolute; bottom: 4px; left: -2px; right: -2px; height: 8px;
-  background: color-mix(in srgb, var(--yours) 22%, transparent); border-radius: 4px;
+  content: ''; position: absolute; bottom: 2px; left: -3px; right: -3px; height: 10px;
+  background: color-mix(in srgb, var(--yours) 25%, transparent); border-radius: 5px;
   z-index: -1;
 }
 .hero .lede {
-  color: var(--muted); max-width: 520px; margin: 24px auto 38px;
-  font-size: 1.15rem; line-height: 1.75;
+  color: var(--muted); max-width: 480px; margin: 28px 0 42px;
+  font-size: 1.2rem; line-height: 1.7;
 }
-.hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.hero-ctas .btn { padding: 13px 26px; font-size: 0.95rem; border-radius: 10px; }
+.hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+.hero-ctas .btn { padding: 14px 28px; font-size: 0.95rem; border-radius: 10px; }
 .hero-ctas .btn.ghost { border-width: 2px; }
+@media (max-width: 760px) {
+  .hero { text-align: center; padding: 60px 0 36px; }
+  .hero h1 { max-width: 100%; margin: 0 auto; }
+  .hero .lede { margin-left: auto; margin-right: auto; }
+  .hero-ctas { justify-content: center; }
+  .hero::after { display: none; }
+}
 
 /* hero demo */
 .hero-demo {
-  margin: 56px auto 0; max-width: 600px; text-align: left;
+  margin: 64px auto 0; max-width: 600px; text-align: left;
   background: var(--surface); border-radius: var(--radius-xl);
   padding: 32px; position: relative;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.05);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
   transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
 }
 .hero-demo::before {
@@ -329,8 +347,8 @@ input.invalid { box-shadow: inset 0 0 0 2px var(--bad), 0 0 0 4px color-mix(in s
   pointer-events: none;
 }
 .hero-demo:hover {
-  transform: translateY(-8px) scale(1.008);
-  box-shadow: 0 28px 80px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.08);
+  transform: translateY(-10px) scale(1.01);
+  box-shadow: 0 36px 100px rgba(0,0,0,0.18), 0 12px 32px rgba(0,0,0,0.08);
 }
 .demo-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
 .demo-row { padding: 14px 0; border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent); }
@@ -777,6 +795,162 @@ input.invalid { box-shadow: inset 0 0 0 2px var(--bad), 0 0 0 4px color-mix(in s
 .hero .lede { animation: fade-up 0.65s var(--ease) 0.2s both; }
 .hero-ctas { animation: fade-up 0.65s var(--ease) 0.3s both; }
 .hero-demo { animation: fade-up 0.65s var(--ease) 0.4s both; }
+
+/* ============ SCALE CONTRAST — oversized section numbers ============ */
+
+.section-head { position: relative; }
+.section-head h2::before {
+  content: attr(data-num);
+  position: absolute; top: -32px; left: -8px;
+  font-family: var(--display); font-size: 5rem; font-weight: 800;
+  color: color-mix(in srgb, var(--ink) 4%, transparent);
+  letter-spacing: -0.06em; line-height: 1; pointer-events: none; z-index: -1;
+  transition: color 0.4s;
+}
+.section-head:hover h2::before { color: color-mix(in srgb, var(--yours) 8%, transparent); }
+
+/* ============ ELEMENT PERSONALITY — distinctive badges, not pills ============ */
+
+.badge {
+  border-radius: 5px; /* squared-off, not generic pill */
+  letter-spacing: 0.08em;
+  text-transform: uppercase; font-size: 0.6rem;
+}
+.badge.yours { border-bottom: 2px solid var(--yours); }
+.badge.theirs { border-bottom: 2px solid var(--theirs); }
+
+/* ============ BREAK CONVENTION — nav active indicator ============ */
+
+.nav a.active {
+  color: var(--ink); font-weight: 600;
+  position: relative;
+}
+.nav a.active::after {
+  content: ''; position: absolute; bottom: 1px; left: 14px; right: 14px;
+  height: 2px; background: var(--yours); border-radius: 1px;
+}
+
+/* ============ CARD PERSONALITY — corner accent, not generic border ============ */
+
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 48px; height: 48px; pointer-events: none;
+  background: radial-gradient(circle at top left, color-mix(in srgb, var(--yours) 10%, transparent), transparent 70%);
+  border-radius: var(--radius-xl) 0 0 0; z-index: 0;
+  transition: width 0.4s var(--ease), height 0.4s var(--ease);
+}
+.card:hover::before { width: 80px; height: 80px; }
+.card > * { position: relative; z-index: 1; }
+
+/* ============ OVERFLOW EXPLOIT — step numbers bleed ============ */
+
+.step {
+  overflow: visible;
+}
+.step::before {
+  counter-increment: step; content: counter(step, decimal-leading-zero);
+  font-family: var(--display); font-size: 3rem; font-weight: 800;
+  color: color-mix(in srgb, var(--ink) 6%, transparent);
+  position: absolute; top: -8px; right: 12px; line-height: 1;
+  letter-spacing: -0.04em; pointer-events: none;
+  transition: color 0.3s;
+}
+.step:hover::before { color: color-mix(in srgb, var(--yours) 14%, transparent); }
+.step::after { display: none; } /* remove the old radial accent */
+
+/* ============ GOLDEN BOX — asymmetric, not centered ============ */
+
+.golden {
+  border-left: 3px solid var(--theirs);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--theirs) 8%, var(--surface)), var(--surface) 60%);
+}
+.golden::after {
+  content: ''; position: absolute; bottom: -40px; left: -40px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--theirs) 12%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+/* ============ LEDGER BOX — left accent bar, not top ============ */
+
+.led-box::before {
+  inset: 0 auto 0 0; width: 3px; height: auto;
+  background: var(--border); transition: background 0.3s, width 0.3s;
+}
+.led-box:hover::before { width: 4px; }
+.led-box.yours::before { background: var(--yours); }
+.led-box.theirs::before { background: var(--theirs); }
+
+/* ============ SOCIAL PROOF — tighter, more dramatic ============ */
+
+.proof-num {
+  font-size: 3.4rem; letter-spacing: -0.05em;
+}
+.proof-label {
+  font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.social-proof { gap: 56px; }
+
+/* ============ DEV CARD — left accent bar ============ */
+
+.dev-card::before { display: none; }
+.dev-card::after {
+  content: ''; position: absolute; left: 0; top: 12px; bottom: 12px;
+  width: 3px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--yours), var(--theirs));
+  opacity: 0; transition: opacity 0.3s;
+}
+.dev-card:hover::after { opacity: 1; }
+
+/* ============ TOAST — left-to-right slide, not bottom-left pop ============ */
+
+@keyframes toast-in { from { opacity: 0; transform: translateX(-24px) scale(0.96); } }
+
+/* ============ MODAL — slide-up with scale, not just fade ============ */
+
+.modal {
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* ============ BUTTONS — tertiary text-link style ============ */
+
+.btn.text-link {
+  background: none; border: none; color: var(--yours); padding: 0;
+  font-weight: 500; text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.btn.text-link:hover { text-decoration-thickness: 2.5px; filter: none; box-shadow: none; background: none; }
+.btn.text-link:active { transform: none; }
+
+/* ============ MISC POLISH ============ */
+
+/* skip-to-content link */
+.skip-link {
+  position: absolute; top: -100%; left: 16px; z-index: 200;
+  background: var(--yours); color: var(--bg); padding: 8px 16px;
+  border-radius: var(--radius-s); font-size: 0.85rem; font-weight: 600;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 16px; }
+
+/* nav focus ring only for keyboard */
+.nav a:focus:not(:focus-visible) { outline: none; }
+
+/* input error state inline */
+.field-error { font-size: 0.78rem; color: var(--bad); margin-top: -8px; margin-bottom: 12px; }
+
+/* section separator — not a plain hr */
+.section-sep {
+  border: none; height: 1px; margin: 48px 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 10%, transparent), transparent);
+}
+
+/* scrollbar theming */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink) 15%, transparent); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ink) 25%, transparent); }
 
 /* ============ ACCESSIBILITY ============ */
 

@@ -221,7 +221,7 @@ function renderLanding() {
     </section>
 
     <div class="wrap">
-      <div class="section-head"><h2>How it works</h2><span class="mono-sm muted">a real sequence, in order</span></div>
+      <div class="section-head"><h2 data-num="01">How it works</h2><span class="mono-sm muted">a real sequence, in order</span></div>
       <div class="steps">
         <div class="step"><h3>Set up</h3><p>Create your closed test in Play Console and paste the invite link into your profile.</p></div>
         <div class="step"><h3>Swap</h3><p>Browse the community and offer a test-for-test trade. You join theirs, they join yours.</p></div>
