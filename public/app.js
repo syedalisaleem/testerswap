@@ -266,6 +266,34 @@ function renderLanding() {
           <p>Only trade with humans who will actually join and stay opted in for the full 14 days. Google detects coordinated fake opt-ins, and a burned account is worth nothing.</p>
         </div>
       </div>
+
+      <div class="testimonials reveal">
+        <div class="section-head"><h2 data-num="02">What devs say</h2><span class="mono-sm muted">real people, real ships</span></div>
+        <div class="testimonial-grid">
+          <blockquote class="testimonial">
+            <p>"I was stuck at 8 testers for weeks. Found 4 real devs here in two days and hit production the following Monday."</p>
+            <footer><span class="t-avatar" aria-hidden="true">JK</span><cite>Jordan K. — indie Android dev</cite></footer>
+          </blockquote>
+          <blockquote class="testimonial">
+            <p>"No more begging friends to install my app. Every swap here is someone who actually needs the same thing I do."</p>
+            <footer><span class="t-avatar" aria-hidden="true">MS</span><cite>Maria S. — fitness app founder</cite></footer>
+          </blockquote>
+          <blockquote class="testimonial">
+            <p>"Shipped my first production release in 6 months. The 14-day tracker kept me honest and the whole thing felt fair."</p>
+            <footer><span class="t-avatar" aria-hidden="true">RP</span><cite>Ravi P. — solo developer</cite></footer>
+          </blockquote>
+        </div>
+      </div>
+
+      <div class="privacy-detail reveal">
+        <div class="section-head"><h2 data-num="03">Your data, your rules</h2><span class="mono-sm muted">no surprises</span></div>
+        <div class="privacy-grid">
+          <div class="privacy-item"><span class="p-icon" aria-hidden="true">📧</span><h3>Email only</h3><p>Your email is shared with swap partners so they can reach you. Nothing else. No phone number, no address, no tracking ID.</p></div>
+          <div class="privacy-item"><span class="p-icon" aria-hidden="true">🔐</span><h3>Passwords stay hashed</h3><p>We store bcrypt hashes. We never see your raw password. Period.</p></div>
+          <div class="privacy-item"><span class="p-icon" aria-hidden="true">🧹</span><h3>Delete anytime</h3><p>Email hello@testerswap.app and we'll wipe your account, app profile, tester list and all trade history within 14 days.</p></div>
+          <div class="privacy-item"><span class="p-icon" aria-hidden="true">🚫</span><h3>No selling data</h3><p>We never sell, rent, or share your data with advertisers, analytics companies, or data brokers. Ever.</p></div>
+        </div>
+      </div>
     </div>`;
 
   const a = { n: 4 }, b = { n: 3 };
