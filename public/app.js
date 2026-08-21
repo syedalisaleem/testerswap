@@ -198,12 +198,18 @@ function renderLanding() {
           <div class="hero-ctas">
             ${meData.user
               ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a>`
-              : `<a href="#/register" class="btn">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
+              : `<a href="#/register" class="btn hero-primary">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
           </div>
+          <p class="trust-line mono-sm muted">Free forever · No credit card · Works with any Play Console app</p>
           <div class="social-proof">
             <div class="proof-stat"><span class="proof-num" id="proof-devs">--</span><span class="proof-label">developers</span></div>
             <div class="proof-stat"><span class="proof-num" id="proof-swaps">--</span><span class="proof-label">swaps completed</span></div>
             <div class="proof-stat"><span class="proof-num" id="proof-shipped">--</span><span class="proof-label">shipped to production</span></div>
+          </div>
+          <div class="trust-bar">
+            <span class="trust-item">🔒 All data encrypted</span>
+            <span class="trust-item">✓ No bots, real humans only</span>
+            <span class="trust-item">🚫 No ads, no tracking</span>
           </div>
         </div>
         <div class="hero-demo" id="hero-demo">
