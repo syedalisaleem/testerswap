@@ -456,7 +456,7 @@ function renderRegister() { renderAuth('Create your account', 'Create account', 
 /* ---------- dashboard ---------- */
 
 function clockHTML(ts) {
-  const diff = ts ? Math.max(0, ts + DAY * DAY - Date.now()) : 0;
+  const diff = ts ? Math.max(0, ts + 14 * DAY - Date.now()) : 0;
   const d = Math.floor(diff / DAY);
   const h = Math.floor(diff / 3600000) % 24;
   const m = Math.floor(diff / 60000) % 60;
@@ -505,7 +505,7 @@ async function renderDashboard() {
           <label for="description">What's your app about? (optional)</label>
           <input id="description" placeholder="One line for the community">
           <label for="appCategory">Category (helps find the right swap partners)</label>
-          <select id="appCategory" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg)">
+          <select id="appCategory">
             <option value="productivity">Productivity</option>
             <option value="social">Social</option>
             <option value="games">Games</option>
@@ -998,7 +998,7 @@ async function renderSettings() {
           <div><label for="aiModel">Model</label><input id="aiModel" placeholder="gpt-4o-mini" value="${esc(s.ai_model || 'gpt-4o-mini')}"></div>
           <div><label for="aiBase">Base URL</label><input id="aiBase" placeholder="https://api.openai.com/v1" value="${esc(s.ai_base_url || 'https://api.openai.com/v1')}"></div>
         </div>
-        <div id="err" class="inline-err" role="status"></div>
+        <div id="err" class="inline-err" role="alert"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" id="save">Save changes</button>
           <button class="btn ghost" id="testKey" type="button">Test connection</button>
@@ -1127,7 +1127,7 @@ async function renderSocial() {
         <label for="autoSubreddits">Subreddits (comma-separated)</label>
         <input id="autoSubreddits" placeholder="AndroidClosedTesting, androiddev" value="AndroidClosedTesting, androiddev">
         <label for="autoFrequency">Post frequency</label>
-        <select id="autoFrequency" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg)">
+        <select id="autoFrequency">
           <option value="6">Every 6 hours</option>
           <option value="12">Every 12 hours</option>
           <option value="24">Daily</option>
