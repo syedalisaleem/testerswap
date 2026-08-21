@@ -193,23 +193,23 @@ function renderLanding() {
       <div class="hero-grid">
         <div class="hero-copy">
           <p class="eyebrow">the 12/14 closed-testing gauntlet</p>
-          <h1>Twelve real humans. Fourteen long days.<br>One fair <em>swap</em> at a time.</h1>
-          <p class="lede">Google Play requires 12 testers opted into your closed test for 14 days before you can ship to production. TesterSwap pairs you with other devs who need the same. You test theirs, they test yours. No fakes, no bots, no paid installs.</p>
+          <h1>Ship your app to the Play Store.<br>Real testers, real opt-ins, <em>real&nbsp;fast.</em></h1>
+          <p class="lede">Google Play requires 12 testers opted into your closed test for 14 days before you can ship. TesterSwap pairs you with devs who need the same. You test theirs, they test yours.</p>
           <div class="hero-ctas">
             ${meData.user
-              ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a>`
+              ? `<a href="#/dashboard" class="btn hero-primary">Go to dashboard</a><a href="#/browse" class="btn ghost">Browse apps</a>`
               : `<a href="#/register" class="btn hero-primary">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
           </div>
-          <p class="trust-line mono-sm muted">Free forever · No credit card · Works with any Play Console app</p>
-          <div class="social-proof">
+          <p class="cta-support">Free forever · No credit card · Takes 2 minutes</p>
+          <div class="trust-row-hero">
+            <span class="trust-pill">🔒 Encrypted</span>
+            <span class="trust-pill">✓ Real humans only</span>
+            <span class="trust-pill">🚫 No tracking</span>
+          </div>
+          <div class="social-proof" id="social-proof">
             <div class="proof-stat"><span class="proof-num" id="proof-devs">--</span><span class="proof-label">developers</span></div>
             <div class="proof-stat"><span class="proof-num" id="proof-swaps">--</span><span class="proof-label">swaps completed</span></div>
             <div class="proof-stat"><span class="proof-num" id="proof-shipped">--</span><span class="proof-label">shipped to production</span></div>
-          </div>
-          <div class="trust-bar">
-            <span class="trust-item">🔒 All data encrypted</span>
-            <span class="trust-item">✓ No bots, real humans only</span>
-            <span class="trust-item">🚫 No ads, no tracking</span>
           </div>
         </div>
         <div class="hero-demo" id="hero-demo">
@@ -377,14 +377,19 @@ function renderLanding() {
     requestAnimationFrame(step);
   };
 
-  // Social proof stats
+  // Social proof stats — hide if zero, show "Launching now"
+  const socialProof = document.getElementById('social-proof');
   api('/social/stats').then(s => {
+    const total = (s.totalDevs || 0) + (s.completedSwaps || 0) + (s.shippedApps || 0);
+    if (total < 10) {
+      if (socialProof) socialProof.innerHTML = '<p class="launching-now">Launching now — early devs are already swapping</p>';
+      return;
+    }
     countUp(document.getElementById('proof-devs'), s.totalDevs || 0);
     countUp(document.getElementById('proof-swaps'), s.completedSwaps || 0);
     countUp(document.getElementById('proof-shipped'), s.shippedApps || 0);
   }).catch(() => {
-    const d = document.getElementById('proof-devs');
-    if (d) d.textContent = '0';
+    if (socialProof) socialProof.innerHTML = '<p class="launching-now">Launching now — early devs are already swapping</p>';
   });
 
   // scroll reveal
