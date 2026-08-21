@@ -197,7 +197,7 @@ function renderLanding() {
           <p class="lede">Google Play requires 12 testers opted into your closed test for 14 days before you can ship to production. TesterSwap pairs you with other devs who need the same. You test theirs, they test yours. No fakes, no bots, no paid installs.</p>
           <div class="hero-ctas">
             ${meData.user
-              ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a><span class="mono-sm muted" style="align-self:center">signed in as ${esc(meData.user.email)}</span>`
+              ? `<a href="#/dashboard" class="btn">Go to my test</a><a href="#/browse" class="btn ghost">Browse community</a>`
               : `<a href="#/register" class="btn">Register my app</a><a href="#/login" class="btn ghost">Sign in</a>`}
           </div>
           <div class="social-proof">

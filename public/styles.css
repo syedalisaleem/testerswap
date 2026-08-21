@@ -534,20 +534,21 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
   transition: color 0.3s;
 }
 .step:hover::before { color: color-mix(in srgb, var(--yours) 45%, transparent); }
-.step h3 { margin: 10px 0 8px; font-size: 0.98rem; padding-right: 40px; }
+.step h3 { margin: 10px 0 8px; font-size: 0.98rem; padding-right: 58px; }
 .step p { color: var(--muted); font-size: 0.85rem; line-height: 1.55; }
 
 .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 60px 0 10px; gap: 12px; flex-wrap: wrap; position: relative; }
 .section-head h2 { position: relative; }
 .section-head h2::before {
   content: attr(data-num);
-  position: absolute; top: -30px; left: -6px;
-  font-family: var(--display); font-size: 4.6rem; font-weight: 400;
-  color: color-mix(in srgb, var(--ink) 6%, transparent);
+  position: absolute; top: -24px; left: -10px;
+  font-family: var(--display); font-size: 4.2rem; font-weight: 400;
+  color: rgba(128, 128, 128, 0.08);
+  color: color-mix(in srgb, var(--ink) 5%, transparent);
   letter-spacing: 0; line-height: 1; pointer-events: none; z-index: -1;
   transition: color 0.4s;
 }
-.section-head:hover h2::before { color: color-mix(in srgb, var(--yours) 14%, transparent); }
+.section-head:hover h2::before { color: color-mix(in srgb, var(--yours) 12%, transparent); }
 
 /* ============ SOCIAL PROOF ============ */
 
