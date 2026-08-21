@@ -169,6 +169,8 @@ main { padding: 40px 0 80px; outline: none; flex: 1; }
   .hide-mobile { display: none !important; }
   .theme-btn span:not(.dot) { display: none; }
   .theme-btn { padding: 6px 8px; }
+  .user-chip { display: none; }
+  #btn-logout { font-size: 0.6rem; padding: 5px 8px; }
 }
 .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .user-chip { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
@@ -383,9 +385,10 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
 .hero-primary { padding: 16px 34px !important; font-size: 1rem !important; box-shadow: 0 12px 32px color-mix(in srgb, var(--yours) 45%, transparent), var(--glass-highlight) !important; }
 .trust-line { margin-top: 14px; font-size: 0.7rem !important; }
 @media (max-width: 760px) {
-  .hero { text-align: center; padding: 56px 0 32px; }
-  .hero h1 { max-width: 100%; margin: 0 auto; }
-  .hero .lede { margin-left: auto; margin-right: auto; }
+  main { padding: 20px 0 60px; }
+  .hero { text-align: center; padding: 32px 0 24px; }
+  .hero h1 { max-width: 100%; margin: 0 auto; font-size: clamp(1.6rem, 7vw, 2.2rem); }
+  .hero .lede { margin-left: auto; margin-right: auto; margin-top: 16px; margin-bottom: 24px; font-size: 0.95rem; }
   .hero-ctas { justify-content: center; }
 }
 
@@ -564,7 +567,7 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
   text-shadow: 0 0 30px color-mix(in srgb, var(--yours) 45%, transparent);
 }
 .proof-label { font-family: var(--body); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
-@media (max-width: 520px) { .social-proof { gap: 30px; } .proof-num { font-size: 2.2rem; } }
+@media (max-width: 520px) { .social-proof { gap: 24px; margin-top: 24px; } .proof-num { font-size: 2rem; } .trust-bar { gap: 16px; margin-top: 14px; } .trust-item { font-size: 0.62rem; } }
 .trust-bar { display: flex; gap: 24px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
 .trust-item { font-family: var(--body); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
 
